@@ -4,7 +4,7 @@
 	import authStore from "$lib/stores/authStore";
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
-
+	import "./index.css";
 
 	const AUTHENTICATED_ROUTES = [
 		"/classes",
