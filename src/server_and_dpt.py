@@ -105,7 +105,7 @@ async def hello(request):
                         context.drawImage(video, 0, 0, canvas.width, canvas.height);
                         const dataURL = canvas.toDataURL('image/jpeg');
                         ws.send(dataURL);
-                    }, 100);
+                    }, 66); // approximately 15 fps (1000ms / 15 ≈ 66.67ms)
                 };
                 ws.onmessage = (event) => {
                     const img = new Image();
