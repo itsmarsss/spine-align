@@ -5,7 +5,7 @@ import cv2
 
 cap = cv2.VideoCapture(0)
 
-facemodel = YOLO("yolov8n-face.pt")
+facemodel = YOLO("./models/pretrained/yolov8n-face.pt")
 
 prev_time = cv2.getTickCount()
 while cap.isOpened():
