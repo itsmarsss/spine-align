@@ -7,7 +7,7 @@ from midas.dpt_depth import (
 from torchvision.transforms import Compose
 
 # Load the MiDaS model architecture
-model_path = "./dpt_large_384.pt"
+model_path = "./models/dpt_large_384.pt"
 midas = DPTDepthModel(
     path=model_path,
     backbone="vitl16_384",
