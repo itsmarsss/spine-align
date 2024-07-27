@@ -9,6 +9,7 @@ from io import BytesIO
 from PIL import Image, UnidentifiedImageError
 import aiohttp
 import logging
+import pathlib
 
 logging.basicConfig(level=logging.INFO)
 
@@ -76,50 +77,8 @@ async def handle_post(request):
 
     return web.Response(text=html_content, content_type='text/html')
 
-async def hello(request):
-    html_content = """
-    <html>
-    <body>
-        <h2>Upload an Image</h2>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="image" accept="image/*">
-            <input type="submit" value="Upload">
-        </form>
-        <h2>Stream Webcam</h2>
-        <button onclick="startWebcam()">Start Webcam</button>
-        <br><br>
-        <video id="webcam" autoplay></video>
-        <div id="depth-map-container"></div>
-        <script>
-            const video = document.getElementById('webcam');
-            const startWebcam = async () => {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                const ws = new WebSocket('ws://' + window.location.host + '/ws');
-                ws.onopen = () => {
-                    setInterval(async () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        const context = canvas.getContext('2d');
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const dataURL = canvas.toDataURL('image/jpeg');
-                        ws.send(dataURL);
-                    }, 66); // approximately 15 fps (1000ms / 15 ≈ 66.67ms)
-                };
-                ws.onmessage = (event) => {
-                    const img = new Image();
-                    img.src = event.data;
-                    const container = document.getElementById('depth-map-container');
-                    container.innerHTML = '';
-                    container.appendChild(img);
-                };
-            };
-        </script>
-    </body>
-    </html>
-    """
-    return web.Response(text=html_content, content_type='text/html')
+async def index(request):
+    return web.FileResponse('./static/index.html')
 
 async def websocket_handler(request):
     ws = web.WebSocketResponse()
@@ -166,7 +125,7 @@ async def websocket_handler(request):
 
 def init_func(argv):
     app = web.Application()
-    app.router.add_get("/", hello)
+    app.router.add_get("/", index)
     app.router.add_post("/upload", handle_post)
     app.router.add_get("/ws", websocket_handler)
     return app
