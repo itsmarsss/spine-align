@@ -28,18 +28,25 @@
           video: true,
         });
         video.srcObject = stream;
+
         const ws = new WebSocket("ws://" + window.location.host + "/ws");
 
         ws.onopen = () => {
-          setInterval(async () => {
-            const canvas = document.createElement("canvas");
-            // canvas.width = 320;
-            // canvas.height = 180;
-            const context = canvas.getContext("2d");
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+
+          const sendFrame = () => {
+            // Set the canvas size to match the video size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const dataURL = canvas.toDataURL("image/jpeg");
             ws.send(dataURL);
-          }, 100); // approximately 15 fps (1000ms / 15 ≈ 66.67ms)
+            requestAnimationFrame(sendFrame);
+          };
+
+          requestAnimationFrame(sendFrame);
         };
 
         ws.onmessage = (event) => {
