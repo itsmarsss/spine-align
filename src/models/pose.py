@@ -1,8 +1,5 @@
 import cv2
 import mediapipe as mp
-import numpy as np
-from PIL import Image, UnidentifiedImageError
-from io import BytesIO
 
 # Initialize MediaPipe Pose
 mp_pose = mp.solutions.pose

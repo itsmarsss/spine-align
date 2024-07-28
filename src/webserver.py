@@ -4,7 +4,7 @@ import aiohttp
 import base64
 import cv2
 import numpy as np
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 from io import BytesIO
 from models.dpt import process_depth_image
 from models.yolov8_face import detect_faces, draw_boxes
@@ -18,15 +18,15 @@ async def handle_post(request):
 
     try:
         # Process the image for depth estimation
-        depth_output, img_data = process_depth_image(img_data)
+        img = Image.open(BytesIO(img_data)).convert("RGB")
+        img = np.array(img)
+
+        # Process the image for depth estimation
+        depth_output = process_depth_image(img)
         
         # Convert depth output to base64
         _, buffer = cv2.imencode('.png', depth_output)
         depth_base64_output = base64.b64encode(buffer).decode('utf-8')
-
-        # Process the image for face detection
-        img = Image.open(BytesIO(img_data)).convert("RGB")
-        img = np.array(img)
         
         face_results = detect_faces(img)
         img_with_boxes = draw_boxes(img, face_results)
@@ -72,6 +72,9 @@ async def websocket_handler(request):
                 # Process the image data for image
                 img = Image.open(BytesIO(img_data)).convert("RGB")
                 img = np.array(img)
+
+                _, buffer = cv2.imencode('.png', img)
+                img_base64_output = base64.b64encode(buffer).decode('utf-8')
 
                 # Process the image for depth estimation
                 depth_output = process_depth_image(img)
@@ -145,7 +148,7 @@ async def websocket_handler(request):
                 
                 # Send results back via WebSocket
                 await ws.send_json({
-                    "original_image": encoded,
+                    "original_image": img_base64_output,
                     "depth_image": depth_base64_output,
                     "face_image": face_base64_output,
                     "boxes": boxes,

@@ -1,10 +1,6 @@
+import cv2
 import torch
 from midas.dpt_depth import DPTDepthModel
-from torchvision.transforms import Compose
-import numpy as np
-import cv2
-from PIL import Image, UnidentifiedImageError
-from io import BytesIO
 
 # Load the MiDaS model architecture
 model_path = "./models/pretrained/dpt_large_384.pt"
