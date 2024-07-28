@@ -8,14 +8,14 @@
 
 	const AUTHENTICATED_ROUTES = [
 		"/classes",
+		"/new-class",
 	]
 
 	onMount(() => {
 		const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
-			console.log(user)
 			authStore.set(user)
 
-			
+
 			if (browser && AUTHENTICATED_ROUTES.some(route => window.location.pathname.startsWith(route)) && !$authStore) {
 				goto("/log-in");
 			}
