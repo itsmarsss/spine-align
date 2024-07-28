@@ -1,0 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	--color-accent: #4744d9;
+	--color-light-accent: #D5D4F9;
+	--color-black: #000000;
+	--color-white: #F5F5F5;
+	--color-background: #EDECF4;
+	--color-dark-gray: #999999;
+	--color-light-gray: #BDBDBD;
+}
