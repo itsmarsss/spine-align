@@ -27,7 +27,7 @@
 </script>
 
 <!-- landing page -->
-<header class="bg-background w-screen h-screen">
+<header class="w-screen">
     <NavBar/>
 </header>
 
