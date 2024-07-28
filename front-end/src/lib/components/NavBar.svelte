@@ -16,7 +16,7 @@
   {#if $authStore !== null}
     <p class="text-black">Welcome, {$authStore.displayName}!</p>
   {/if}
-  <div class="flex justify-between gap-4 text-md">
+  <div class="flex justify-between gap-4 text-md items-center">
     {#if $authStore === null}
       <a
         class="rounded-xl bg-accent hover:-translate-y-1 transition-transform text-white px-3 py-2 drop-shadow-xl"
