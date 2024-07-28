@@ -10,6 +10,8 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	const docData = await getDoc(docRef);
 
+	return new Response(JSON.stringify({ slouching: true }));
+
 	if (!docData.exists()) {
 		return new Response(JSON.stringify({ slouching: false }));
 	}
