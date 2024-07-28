@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  	import { goto } from "$app/navigation";
 	import { logIn, signUp } from "$lib/stores/authStore";
 	import type { UserCredential } from "firebase/auth";
 
@@ -74,7 +74,7 @@
 	}
 </script>
 
-<form class="auth-form" method="POST" on:submit={formType === "log-in" ? onLogIn : onSignUp}>
+<form class="auth-form" on:submit={formType === "log-in" ? onLogIn : onSignUp}>
 	<!-- <div class="name-control">
 		<div class="form-control">
 			<label for="first-name">First Name</label>
