@@ -4,7 +4,6 @@ from torchvision.transforms import Compose
 import numpy as np
 import cv2
 from PIL import Image, UnidentifiedImageError
-import base64
 from io import BytesIO
 
 # Load the MiDaS model architecture
@@ -52,7 +51,4 @@ def process_image(img_data):
     # Normalize the output for visualization
     output = cv2.normalize(output, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
 
-    _, buffer = cv2.imencode('.png', output)
-    base64_output = base64.b64encode(buffer).decode('utf-8')
-
-    return base64_output, img_data
+    return output, img_data

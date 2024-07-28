@@ -8,6 +8,7 @@ from PIL import Image, UnidentifiedImageError
 from io import BytesIO
 from models.dpt import process_image as process_depth_image
 from models.yolov8_face import detect_faces, draw_boxes
+from models.pose import process_image as process_pose_image
 
 logging.basicConfig(level=logging.INFO)
 
@@ -17,8 +18,12 @@ async def handle_post(request):
 
     try:
         # Process the image for depth estimation
-        depth_base64_output, img_data = process_depth_image(img_data)
+        depth_output, img_data = process_depth_image(img_data)
         
+        # Convert depth output to base64
+        _, buffer = cv2.imencode('.png', depth_output)
+        depth_base64_output = base64.b64encode(buffer).decode('utf-8')
+
         # Process the image for face detection
         img = Image.open(BytesIO(img_data)).convert("RGB")
         img = np.array(img)
@@ -65,7 +70,9 @@ async def websocket_handler(request):
 
             try:
                 # Process the image for depth estimation
-                depth_base64_output, _ = process_depth_image(img_data)
+                depth_output, _ = process_depth_image(img_data)
+                _, buffer = cv2.imencode('.png', depth_output)
+                depth_base64_output = base64.b64encode(buffer).decode('utf-8')
                 
                 # Process the image for face detection
                 img = Image.open(BytesIO(img_data)).convert("RGB")
@@ -87,6 +94,7 @@ async def websocket_handler(request):
                 boxes = []
                 cropped_faces = []
                 cropped_depths = []
+                cropped_poses = []
                 for box in face_results[0].boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     
@@ -120,16 +128,35 @@ async def websocket_handler(request):
                     cropped_face_bytes = BytesIO()
                     cropped_face_pil.save(cropped_face_bytes, format='PNG')
                     cropped_face_data = cropped_face_bytes.getvalue()
-                    cropped_depth_base64, _ = process_depth_image(cropped_face_data)
-                    cropped_depths.append(cropped_depth_base64)
+                    cropped_depth_output, _ = process_depth_image(cropped_face_data)
+                    _, buffer = cv2.imencode('.png', cropped_depth_output)
+                    cropped_depths.append(base64.b64encode(buffer).decode('utf-8'))
+
+                    # Process cropped face for pose detection
+                    cropped_pose_output, _ = process_pose_image(cropped_face_data)
+                    _, buffer = cv2.imencode('.png', cropped_pose_output)
+                    cropped_poses.append(base64.b64encode(buffer).decode('utf-8'))
 
                 # Convert the image with boxes to base64
                 img_with_boxes = cv2.cvtColor(img_with_boxes, cv2.COLOR_RGB2BGR)
                 _, buffer = cv2.imencode('.png', img_with_boxes)
                 face_base64_output = base64.b64encode(buffer).decode('utf-8')
                 
-                # Send both results back via WebSocket
-                await ws.send_json({"depth_image": depth_base64_output, "face_image": face_base64_output, "boxes": boxes, "cropped_faces": cropped_faces, "cropped_depths": cropped_depths})
+                # Process the original image for pose detection
+                pose_output, _ = process_pose_image(img_data)
+                _, buffer = cv2.imencode('.png', pose_output)
+                pose_base64_output = base64.b64encode(buffer).decode('utf-8')
+                
+                # Send results back via WebSocket
+                await ws.send_json({
+                    "depth_image": depth_base64_output,
+                    "face_image": face_base64_output,
+                    "pose_image": pose_base64_output,
+                    "boxes": boxes,
+                    "cropped_faces": cropped_faces,
+                    "cropped_depths": cropped_depths,
+                    "cropped_poses": cropped_poses
+                })
 
             except ValueError as e:
                 await ws.send_str(str(e))

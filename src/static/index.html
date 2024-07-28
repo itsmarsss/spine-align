@@ -64,7 +64,8 @@
       }
       #coordinates-container,
       #cropped-faces-container,
-      #cropped-depths-container {
+      #cropped-depths-container,
+      #cropped-poses-container {
         margin-top: 20px;
         background-color: #fff;
         padding: 20px;
@@ -74,7 +75,8 @@
         max-width: 500px;
       }
       .cropped-face,
-      .cropped-depth {
+      .cropped-depth,
+      .cropped-pose {
         margin: 10px;
         border-radius: 5px;
         border: 2px solid #ddd;
@@ -104,6 +106,9 @@
     </div>
     <div id="cropped-depths-container">
       <div class="result-title">Cropped Faces Depth Maps</div>
+    </div>
+    <div id="cropped-poses-container">
+      <div class="result-title">Cropped Faces Pose Maps</div>
     </div>
     <script>
       const video = document.getElementById("webcam");
@@ -135,6 +140,7 @@
             const boxes = data.boxes;
             const croppedFaces = data.cropped_faces;
             const croppedDepths = data.cropped_depths;
+            const croppedPoses = data.cropped_poses;
 
             const depthImg = new Image();
             depthImg.src = `data:image/png;base64,${depthImage}`;
@@ -187,6 +193,18 @@
               depthImg.src = `data:image/png;base64,${depth}`;
               depthImg.className = "cropped-depth";
               croppedDepthsContainer.appendChild(depthImg);
+            });
+
+            const croppedPosesContainer = document.getElementById(
+              "cropped-poses-container"
+            );
+            croppedPosesContainer.innerHTML =
+              "<div class='result-title'>Cropped Faces Pose Maps</div>";
+            croppedPoses.forEach((pose, index) => {
+              const poseImg = new Image();
+              poseImg.src = `data:image/png;base64,${pose}`;
+              poseImg.className = "cropped-pose";
+              croppedPosesContainer.appendChild(poseImg);
             });
           };
         } catch (error) {
