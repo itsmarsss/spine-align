@@ -17,7 +17,7 @@
 			authStore.set(user)
 
 
-			if (browser && AUTHENTICATED_ROUTES.some(route => window.location.pathname.startsWith(route)) && !$authStore) {
+			if (browser && AUTHENTICATED_ROUTES.some(route => window.location.pathname.split("?")[0] === (route)) && !$authStore) {
 				goto("/log-in");
 			}
 		});
