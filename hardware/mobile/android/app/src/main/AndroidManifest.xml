@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_dataSync" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_remoteMessaging" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    
     <application
         android:label="mobile"
         android:name="${applicationName}"

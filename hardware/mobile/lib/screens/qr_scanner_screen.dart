@@ -25,6 +25,15 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               child: MobileScanner(
                 onDetect: (barcode) {
                   print("${dotenv.env["BASE_URL"]}/${barcode.barcodes.firstOrNull?.rawValue}");
+                  //pass through to fetch function
+
+
+
+
+
+
+
+                  
                 },
               ),
             ),

@@ -1,11 +1,73 @@
+import 'dart:async';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/screens/qr_scanner_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
 void main() async {
-   await dotenv.load(fileName: ".env");
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  await initializeService();
   runApp(const MyApp());
+}
+
+Future<http.Response> fetch(String uri) {
+  return http.get(Uri.parse(uri));
+}
+
+Future<void> initializeService() async {
+  final service = FlutterBackgroundService();
+
+  await service.configure(
+    androidConfiguration: AndroidConfiguration(
+      autoStart: true,
+      onStart: onStart,
+      isForegroundMode: false,
+      autoStartOnBoot: true,
+    ),
+    iosConfiguration: IosConfiguration(
+      autoStart: false,
+      onForeground: null,
+      onBackground: null,
+    ),
+  );
+
+  //start service on compile
+  service.startService();
+}
+
+@pragma('vm:entry-point')
+void onStart(ServiceInstance service) async {
+  final socket = io.io("your-server-url", <String, dynamic>{
+    'transports': ['websocket'],
+    'autoConnect': true,
+  });
+  socket.onConnect((_) {
+    print('Connected. Socket ID: ${socket.id}');
+    // Implement your socket logic here
+    // For example, you can listen for events or send data
+  });
+
+  socket.onDisconnect((_) {
+    print('Disconnected');
+  });
+  socket.on("event-name", (data) {
+    //do something here like pushing a notification
+  });
+  service.on("stop").listen((event) {
+    service.stopSelf();
+    print("background process is now stopped");
+  });
+
+  service.on("start").listen((event) {});
+
+  Timer.periodic(const Duration(seconds: 1), (timer) {
+    socket.emit("event-name", "your-message");
+    print("service is successfully running ${DateTime.now().second}");
+  });
 }
 
 class MyApp extends StatelessWidget {

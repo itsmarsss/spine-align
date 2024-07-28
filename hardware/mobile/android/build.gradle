@@ -3,6 +3,13 @@ allprojects {
         google()
         mavenCentral()
     }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+    }
+}
+
+ext {
+    kotlin_version = '1.8.10'
 }
 
 rootProject.buildDir = "../build"
