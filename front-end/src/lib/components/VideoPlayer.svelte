@@ -1,7 +1,7 @@
 <script lang="ts">
-  	import type { Point } from "$lib/models/classes";
   	import authStore from "$lib/stores/authStore";
   	import { createEventDispatcher } from "svelte";
+  	import Window from "$lib/components/Window.svelte";
 
 	let videoElement: HTMLVideoElement;
 
@@ -25,9 +25,12 @@
 			height: videoElement.offsetHeight,
 		})
 	})
+
+	
 </script>
 
-<section>
+<Window>
 	<!-- svelte-ignore a11y-media-has-caption -->
-	<video bind:this={videoElement}></video>
-</section>
+	<video bind:this={videoElement} class="w-full aspect-[4/3]"></video>
+</Window>
+
