@@ -29,7 +29,6 @@
           ID: doc.id
         };
       })
-      console.log(classes);
     });
 
     return unsubscribe;
@@ -48,7 +47,7 @@
       <button
         class="bg-accent rounded-lg py-2 px-3 text-white hover:-translate-y-1 transition-transform"
       >
-        Create Class
+        create class
       </button>
     </a>
   </div>

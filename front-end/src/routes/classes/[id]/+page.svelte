@@ -18,8 +18,6 @@
 
 		const docData = await getDoc(docRef);
 
-		console.log(!docData.exists(), docData.get("userID") !== user.uid)
-
 	 	if (!docData.exists() || docData.get("userID") !== user.uid) {
 			goto("/classes")
 		}

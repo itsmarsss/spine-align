@@ -140,7 +140,7 @@
   {#if formType === "sign-up"}
     <p>
       Already have an account? <a
-        class="font-bold hover:underline"
+        class="font-bold hover:underline text-accent"
         href="{base}/log-in">Log in</a
       >
     </p>

@@ -19,13 +19,13 @@
         class="rounded-xl bg-accent hover:-translate-y-1 transition-transform text-white px-3 py-2 drop-shadow-xl"
         href="{base}/sign-up"
       >
-        Sign up
+        sign up
       </a>
       <a
         class="rounded-xl text-black hover:-translate-y-1 transition-transform"
         href="{base}/log-in"
       >
-        Log in
+        log in
       </a>
     {:else}
       <a

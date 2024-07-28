@@ -28,7 +28,11 @@
 	const eventDispatcher = createEventDispatcher<{"video-play": {width: number, height: number}}>();
 
 	authStore.subscribe(async (user) => {
-		if (!user) {
+		if (!user && classId) {
+			return;
+		}
+
+		if (!("navigator" in globalThis)) {
 			return;
 		}
 
@@ -44,6 +48,10 @@
 			width: videoElement.offsetWidth,
 			height: videoElement.offsetHeight,
 		});
+
+		if (!user) {
+			return
+		}
 
 		if (!classId) {
 			return;
@@ -112,13 +120,13 @@
 
 <Window hideButton={hideButton} let:imageIndex>
 	<!-- svelte-ignore a11y-media-has-caption -->
-	{#if imageIndex === 0}
-	<video bind:this={videoElement} class="w-full aspect-[4/3]"></video>
-	{:else if imageIndex === 1}
+	<video bind:this={videoElement} class="w-full aspect-[4/3] {imageIndex === 0 ? '' : 'hidden'}"></video>
+
+	{#if imageIndex === 1}
 	<img src="data:image/jpeg;base64,{yoloImage}" class="w-full aspect-[4/3]"/>
 	{:else if imageIndex === 2}
 	<img src="data:image/jpeg;base64,{midasImage}" class="w-full aspect-[4/3]"/>
-	{:else}
+	{:else if imageIndex === 3}
 	<img src="data:image/jpeg;base64,{annotatedImage}" class="w-full aspect-[4/3]"/>
 	{/if}
 	
