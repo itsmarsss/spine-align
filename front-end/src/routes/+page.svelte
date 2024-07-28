@@ -1,3 +1,12 @@
-<!-- landing page -->
+<script lang="ts">
+  import NavBar from "$lib/components/NavBar.svelte";
 
-<h1 class="text-red-400">HELP ME</h1>
+</script>
+
+<svelte:head>
+    <title>Spine Align</title>
+</svelte:head>
+<!-- landing page -->
+<div class="bg-background w-screen h-screen">
+    <NavBar />
+</div>
