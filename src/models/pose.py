@@ -1,3 +1,4 @@
+import math
 import cv2
 import mediapipe as mp
 
@@ -44,14 +45,14 @@ def crop_at_pose_boundary(img, img_with_pose, results):
         # Crop the image at the expanded boundary
         cropped_img = img[new_y_min:new_y_max, new_x_min:new_x_max]
         cropped_img_with_pose = img_with_pose[new_y_min:new_y_max, new_x_min:new_x_max]
-        return cropped_img, cropped_img_with_pose
+        return cropped_img, cropped_img_with_pose, max(new_x_min, 0), max(new_y_min, 0)
 
-    return None, None
+    return None, None, None, None
 
 def process_pose_image(img):
     results = detect_pose(img)
     img_with_pose = img.copy()
     img_with_pose = draw_pose(img_with_pose, results)
-    cropped_img, cropped_img_with_pose = crop_at_pose_boundary(img, img_with_pose, results)
+    cropped_img, cropped_img_with_pose, x_offset, y_offset = crop_at_pose_boundary(img, img_with_pose, results)
 
-    return cropped_img, cropped_img_with_pose
+    return cropped_img, cropped_img_with_pose, x_offset, y_offset

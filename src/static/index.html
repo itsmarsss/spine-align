@@ -66,7 +66,8 @@
       #cropped-faces-container,
       #cropped-poses-container,
       #cropped-poses-raw-container,
-      #cropped-depths-container {
+      #cropped-depths-container,
+      #gpt-responses-container {
         margin-top: 20px;
         background-color: #fff;
         padding: 20px;
@@ -76,8 +77,10 @@
         max-width: 500px;
       }
       .cropped-face,
+      .cropped-pose,
+      .cropped-pose-raw,
       .cropped-depth,
-      .cropped-pose {
+      .gpt-response {
         margin: 10px;
         border-radius: 5px;
         border: 2px solid #ddd;
@@ -117,6 +120,9 @@
     <div id="cropped-depths-container">
       <div class="result-title">Cropped Faces Depth Maps</div>
     </div>
+    <div id="gpt-responses-container">
+      <div class="result-title">GPT Responses</div>
+    </div>
     <script>
       const video = document.getElementById("webcam");
       let ws;
@@ -150,6 +156,7 @@
             const croppedPoses = data.cropped_poses;
             const croppedPosesRaw = data.cropped_poses_raw;
             const croppedDepths = data.cropped_depths;
+            const gptResponses = data.gpt_responses;
 
             // Original Image
             const originalImg = new Image();
@@ -224,10 +231,10 @@
             );
             croppedPosesRawContainer.innerHTML =
               "<div class='result-title'>Cropped Faces Pose Raw Maps</div>";
-            croppedPosesRaw.forEach((pose, index) => {
+            croppedPosesRaw.forEach((poseRaw, index) => {
               const poseRawImg = new Image();
-              poseRawImg.src = `data:image/png;base64,${pose}`;
-              poseRawImg.className = "cropped-pose";
+              poseRawImg.src = `data:image/png;base64,${poseRaw}`;
+              poseRawImg.className = "cropped-pose-raw";
               croppedPosesRawContainer.appendChild(poseRawImg);
             });
 
@@ -242,6 +249,18 @@
               depthImg.src = `data:image/png;base64,${depth}`;
               depthImg.className = "cropped-depth";
               croppedDepthsContainer.appendChild(depthImg);
+            });
+
+            // GPT Responses
+            const gptResponsesContainer = document.getElementById(
+              "gpt-responses-container"
+            );
+            gptResponsesContainer.innerHTML =
+              "<div class='result-title'>GPT Responses</div>";
+            gptResponses.forEach((response, index) => {
+              gptResponsesContainer.innerHTML += `<p class="gpt-response">Face ${
+                index + 1
+              }: ${response}</p>`;
             });
           };
         } catch (error) {
