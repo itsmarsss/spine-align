@@ -151,6 +151,7 @@
             const croppedPosesRaw = data.cropped_poses_raw;
             const croppedDepths = data.cropped_depths;
 
+            // Original Image
             const originalImg = new Image();
             originalImg.src = `data:image/png;base64,${originalImage}`;
             const originalContainer =
@@ -159,15 +160,17 @@
               "<div class='result-title'>Original Image</div>";
             originalContainer.appendChild(originalImg);
 
+            // Depth Map
             const depthImg = new Image();
-            originalImg.src = `data:image/png;base64,${depthImage}`;
+            depthImg.src = `data:image/png;base64,${depthImage}`;
             const depthContainer = document.getElementById(
               "depth-map-container"
             );
             depthContainer.innerHTML =
               "<div class='result-title'>Depth Map</div>";
-            depthContainer.appendChild(originalImg);
+            depthContainer.appendChild(depthImg);
 
+            // Face Detection
             const faceImg = new Image();
             faceImg.src = `data:image/png;base64,${faceImage}`;
             const faceContainer = document.getElementById(
@@ -177,6 +180,7 @@
               "<div class='result-title'>Face Detection</div>";
             faceContainer.appendChild(faceImg);
 
+            // Bounding Box Coordinates
             const coordinatesContainer = document.getElementById(
               "coordinates-container"
             );
@@ -188,6 +192,7 @@
               }, ${box.y1}) to (${box.x2}, ${box.y2})</p>`;
             });
 
+            // Cropped Faces
             const croppedFacesContainer = document.getElementById(
               "cropped-faces-container"
             );
@@ -200,6 +205,7 @@
               croppedFacesContainer.appendChild(faceImg);
             });
 
+            // Cropped Faces Pose Maps
             const croppedPosesContainer = document.getElementById(
               "cropped-poses-container"
             );
@@ -212,6 +218,7 @@
               croppedPosesContainer.appendChild(poseImg);
             });
 
+            // Cropped Faces Pose Raw Maps
             const croppedPosesRawContainer = document.getElementById(
               "cropped-poses-raw-container"
             );
@@ -224,6 +231,7 @@
               croppedPosesRawContainer.appendChild(poseRawImg);
             });
 
+            // Cropped Faces Depth Maps
             const croppedDepthsContainer = document.getElementById(
               "cropped-depths-container"
             );

@@ -73,9 +73,6 @@ async def websocket_handler(request):
                 img = Image.open(BytesIO(img_data)).convert("RGB")
                 img = np.array(img)
 
-                _, buffer = cv2.imencode('.png', img)
-                img_base64_output = base64.b64encode(buffer).decode('utf-8')
-
                 # Process the image for depth estimation
                 depth_output = process_depth_image(img)
                 _, buffer = cv2.imencode('.png', depth_output)
@@ -148,7 +145,7 @@ async def websocket_handler(request):
                 
                 # Send results back via WebSocket
                 await ws.send_json({
-                    "original_image": img_base64_output,
+                    "original_image": encoded,
                     "depth_image": depth_base64_output,
                     "face_image": face_base64_output,
                     "boxes": boxes,
