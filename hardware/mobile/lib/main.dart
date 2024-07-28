@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -6,17 +7,106 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/screens/qr_scanner_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile/models/slouch_code.dart';
+import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails('your_channel_id', 'your_channel_name',
+          channelDescription: 'your_channel_description',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: false);
+  const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+  await flutterLocalNotificationsPlugin.show(
+      0, 'Slouch Alert', 'You are slouching!', platformChannelSpecifics,
+      payload: 'item x');
+}
 
 void main() async {
+
+  
   WidgetsFlutterBinding.ensureInitialized();
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  final InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  runApp(const MyApp());
   await dotenv.load(fileName: ".env");
   await initializeService();
+
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+
+
+
+  print('User granted permission: ${settings.authorizationStatus}');
   runApp(const MyApp());
+
+  Timer.periodic(Duration(seconds: 1), (Timer t) => fetch('your_uri_here'));
+  //insert uri here
+
+
+
+
+
+
+
+
+
 }
 
-Future<http.Response> fetch(String uri) {
-  return http.get(Uri.parse(uri));
-}
+Future<SlouchCode> fetch(String uri) async {
+  final response = await http.get(Uri.parse(uri));
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+    SlouchCode slouchCode = SlouchCode.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    if(slouchCode.is_slouching) {
+      //push notification here!!!
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+      await messaging.subscribeToTopic('slouch_alert');
+
+      // Send a message to the topic
+      await FirebaseMessaging.instance.sendMessage(
+        to: '/topics/slouch_alert',
+        data: {
+          'title': 'Slouch Alert',
+          'body': 'You are slouching!',
+        },
+      );      
+    }
+    return slouchCode;
+  } else {
+
+    throw Exception('Failed to load data from SlouchCode uri @ main.dart');
+  }
+} 
 
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
