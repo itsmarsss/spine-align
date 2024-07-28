@@ -21,6 +21,10 @@
 	let videoElement: HTMLVideoElement;
 	let canvasElement: HTMLCanvasElement;
 
+	let yoloImage: string;
+	let midasImage: string;
+	let annotatedImage: string;
+
 	const eventDispatcher = createEventDispatcher<{"video-play": {width: number, height: number}}>();
 
 	authStore.subscribe(async (user) => {
@@ -106,9 +110,18 @@
 	})
 </script>
 
-<Window hideButton>
+<Window hideButton={hideButton} let:imageIndex>
 	<!-- svelte-ignore a11y-media-has-caption -->
+	{#if imageIndex === 0}
 	<video bind:this={videoElement} class="w-full aspect-[4/3]"></video>
+	{:else if imageIndex === 1}
+	<img src="data:image/jpeg;base64,{yoloImage}" class="w-full aspect-[4/3]"/>
+	{:else if imageIndex === 2}
+	<img src="data:image/jpeg;base64,{midasImage}" class="w-full aspect-[4/3]"/>
+	{:else}
+	<img src="data:image/jpeg;base64,{annotatedImage}" class="w-full aspect-[4/3]"/>
+	{/if}
+	
 </Window>
 
 <canvas class="hidden" bind:this={canvasElement}></canvas>

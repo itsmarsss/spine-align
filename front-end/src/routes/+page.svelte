@@ -18,7 +18,7 @@
 		</div>
 	</section>
 	<section class="grid grid-cols-12 grid-rows-12 h-screen">
-		<h1 class="text-[36px] col-start-7 col-end-11 row-start-1 row-end-2">Detect poor posture <span class="text-accent">earlier</span></h1>
+		<h1 class="text-[36px] col-start-7 col-end-12 row-start-1 row-end-2">detect poor posture <span class="text-accent">earlier</span></h1>
 		<div class="text-[24px] leading-8 col-start-7 row-start-2 col-end-11 row-end-4 flex flex-col gap-6">
 			<p>Our <span class="text-accent">bleeding edge AI technology</span> takes an innovative new approach to <span class="text-accent">posture diagnosis</span>.</p>
 		</div>
