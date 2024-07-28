@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -10,7 +13,68 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/models/slouch_code.dart';
 import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
+final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+late final InitializationSettings initializationSettings;
+
+
+initializePlatformSpecifics() {
+    var initializationSettingsAndroid =
+        const AndroidInitializationSettings('app_notification_icon');
+    var initializationSettingsIOS = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: false,
+      onDidReceiveLocalNotification: (id, title, body, payload) async {
+        // your call back to the UI
+      },
+    );
+    initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+
+    // await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+    //     onSelectNotification: (String payload) async {
+    //   onNotificationClick(payload);   
+ // your call back to the UI
+
+}
+
+Future<void> showNotification(String title, String body) async {
+    var androidChannelSpecifics = const AndroidNotificationDetails(
+      'CHANNEL_ID',
+      'CHANNEL_NAME',
+      channelDescription: "CHANNEL_DESCRIPTION",
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      timeoutAfter: 5000,
+      styleInformation: DefaultStyleInformation(true, true),
+    );
+    var iosChannelSpecifics = const DarwinNotificationDetails();
+    var platformChannelSpecifics =
+        NotificationDetails(android: androidChannelSpecifics, iOS: iosChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+      0,  // Notification ID
+      title, // Notification Title
+      body, // Notification Body, set as null to remove the body
+      platformChannelSpecifics, // Notification Payload
+    );
+}
+
+_requestIOSPermission() {
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: false,
+          badge: true,
+          sound: true,
+        );
+ }
+
+ 
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -29,20 +93,31 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       payload: 'item x');
 }
 
+// ...
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    name: "spine-align",
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-  final InitializationSettings initializationSettings = const InitializationSettings(
-    android: initializationSettingsAndroid,
-  );
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  initializePlatformSpecifics();
 
-  runApp(const MyApp());
+  if (Platform.isIOS) {
+    _requestIOSPermission();
+  }
+
+  // FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  // const AndroidInitializationSettings initializationSettingsAndroid =
+  //     AndroidInitializationSettings('@mipmap/ic_launcher');
+  // const InitializationSettings initializationSettings = InitializationSettings(
+  //   android: initializationSettingsAndroid,
+  // );
+
+  // await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   await dotenv.load(fileName: ".env");
   await initializeService();
 
@@ -59,50 +134,15 @@ void main() async {
   );
 
 
-
   print('User granted permission: ${settings.authorizationStatus}');
   runApp(const MyApp());
-
-  Timer.periodic(const Duration(seconds: 1), (Timer t) => fetch('your_uri_here'));
   //insert uri here
-
-
-
-
-
 
 
 
 
 }
 
-Future<SlouchCode> fetch(String uri) async {
-  final response = await http.get(Uri.parse(uri));
-
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    SlouchCode slouchCode = SlouchCode.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
-    if(slouchCode.is_slouching) {
-      //push notification here!!!
-      FirebaseMessaging messaging = FirebaseMessaging.instance;
-      await messaging.subscribeToTopic('slouch_alert');
-
-      // Send a message to the topic
-      await FirebaseMessaging.instance.sendMessage(
-        to: '/topics/slouch_alert',
-        data: {
-          'title': 'Slouch Alert',
-          'body': 'You are slouching!',
-        },
-      );      
-    }
-    return slouchCode;
-  } else {
-
-    throw Exception('Failed to load data from SlouchCode uri @ main.dart');
-  }
-} 
 
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
@@ -127,32 +167,77 @@ Future<void> initializeService() async {
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
-  final socket = io.io("your-server-url", <String, dynamic>{
-    'transports': ['websocket'],
-    'autoConnect': true,
-  });
-  socket.onConnect((_) {
-    print('Connected. Socket ID: ${socket.id}');
-    // Implement your socket logic here
-    // For example, you can listen for events or send data
-  });
+  // final socket = io.io("http://localhost:5173", <String, dynamic>{
+  //   'transports': ['websocket'],
+  //   'autoConnect': true,
+  // });
 
-  socket.onDisconnect((_) {
-    print('Disconnected');
-  });
-  socket.on("event-name", (data) {
-    //do something here like pushing a notification
-  });
-  service.on("stop").listen((event) {
-    service.stopSelf();
-    print("background process is now stopped");
-  });
+  // socket.connect();
 
-  service.on("start").listen((event) {});
+  // socket.onConnect((_) {
+  //   print('Connected. Socket ID: ${socket.id}');
+  //   // Implement your socket logic here
+  //   // For example, you can listen for events or send data
+  // });
 
-  Timer.periodic(const Duration(seconds: 1), (timer) {
-    socket.emit("event-name", "your-message");
-    print("service is successfully running ${DateTime.now().second}");
+  // socket.onDisconnect((_) {
+  //   print('Disconnected');
+  // });
+  // socket.on("poll", (data) {
+  //   print("POLLING");
+  //   //do something here like pushing a notification
+  //   if (pollUri == null || pollUri!.isEmpty) {
+  //     return;
+  //   }
+
+  //   fetch(pollUri!);
+  // });
+  // service.on("stop").listen((event) {
+  //   service.stopSelf();
+  //   print("background process is now stopped");
+  // });
+
+  // service.on("start").listen((event) {});
+
+  // Timer.periodic(const Duration(seconds: 1), (timer) {
+  //   socket.emit("poll", "");
+  //   print("service is successfully running ${DateTime.now().second}");
+  // });
+
+  Firebase.initializeApp(
+    name: "spine-align",
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  Timer.periodic(const Duration(seconds: 2), (timer) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final qrId = prefs.getString("qrId");
+    final classId = prefs.getString("classId");
+
+    final docRef = FirebaseFirestore.instance.collection("classes").doc(classId).collection("qrcodes").doc(qrId);
+    final docData = await docRef.get();
+
+    if (docData.get("slouching") == true) {
+      // FirebaseMessaging messaging = FirebaseMessaging.instance;
+      // await messaging.subscribeToTopic('slouch_alert');
+
+      // // Send a message to the topic
+      // await FirebaseMessaging.instance.sendMessage(
+      //   to: '/topics/slouch_alert',
+      //   data: {
+      //     'title': 'Slouch Alert',
+      //     'body': 'You are slouching!',
+      //   },
+      // );      
+      await showNotification("Watch Out!", "You are slouching. Please sit up straight."); 
+    }
+    // print("http://$pollUri");
+    // if (pollUri == null || pollUri.isEmpty) {
+    //   return;
+    // }
+
+    // final sc = await fetch(pollUri);
+    // print(sc);
   });
 }
 

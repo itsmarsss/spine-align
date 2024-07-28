@@ -44,6 +44,8 @@ dependencies:
   workmanager: ^0.5.2
   firebase_messaging: ^15.0.3
   firebase_core: ^3.2.0
+  shared_preferences: ^2.2.3
+  cloud_firestore: ^5.1.0
 
 dev_dependencies:
   flutter_test:
