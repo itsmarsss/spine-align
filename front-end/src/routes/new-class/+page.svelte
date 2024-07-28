@@ -1,15 +1,20 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  	import { goto } from "$app/navigation";
+	import { page } from "$app/stores";
 	import VideoPlayer from "$lib/components/VideoPlayer.svelte";
 	import { firestore } from "$lib/firebase";
 	import type { Class } from "$lib/models/classes";
   	import authStore from "$lib/stores/authStore";
+	import { createQrSvgString, createQrSvgDataUrl } from '@svelte-put/qr';
 	import { addDoc, collection, doc, setDoc } from "firebase/firestore";
 
 	let canvas: HTMLCanvasElement;
 	let numQRCodes: number = 1;
 	let className: string = "";
 	let teacherName: string = "";
+
+	let dataURL: string;
+	let svgString: string;
 
 	let qrPoints: ([number, number] | null)[] = Array(numQRCodes);
 
@@ -79,6 +84,7 @@
 		previousN = numQRCodes;
 		}
 	}
+
 }
 </script>
 
@@ -127,7 +133,7 @@
 		<div class="qrContainer grid grid-cols-2 gap-y-4 gap-x-8 mb-2">
 			{#each Array(numQRCodes) as _, i}
 				<div class="flex flex-row gap-2 justify-between items-center">
-					<span class="align-middle">QR ID {i + 1}</span>
+					<button class="align-middle">QR ID {i + 1}</button>
 					<button class="rounded-xl bg-accent hover:-translate-y-1 transition-transform text-white px-2 py-1 drop-shadow-xl w-[7rem]" on:click={onSelectPoint(i)}>{(qrPoints[i] === undefined || qrPoints[i] === null) ? "Select Point" : `(${qrPoints[i][0]}, ${qrPoints[i][1]})`}</button>
 				</div>
 			{/each}

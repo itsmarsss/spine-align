@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { firestore } from "$lib/firebase";
+  import Icon from "@iconify/svelte";
   import type { Class } from "$lib/models/classes";
   import authStore from "$lib/stores/authStore";
   import { collection, query, where, onSnapshot } from "firebase/firestore";
@@ -33,8 +34,6 @@
 
     return unsubscribe;
   });
-
-  $: JSON.stringify(classes);
 </script>
 
 <svelte:head>
@@ -53,9 +52,12 @@
   </div>
   <div class="classes flex flex-col w-full gap-3">
     {#each classes as classEntity}
-      <a class="rounded-lg p-3 border-black border-[1px] hover:-translate-y-1 transition-transform" href="{base}/classes/{classEntity?.ID}">
-        <h2>{classEntity.className}</h2>
-        <h3>{classEntity.teacherName}</h3>
+      <a class="rounded-lg p-3 border-black border-[1px] hover:-translate-y-1 relative transition-transform" href="{base}/classes/{classEntity?.ID}">
+        <h2 class="font-bold text-xl">{classEntity.className}</h2>
+        <h3 class="text-base">{classEntity.teacherName}</h3>
+		<a href="{base}/classes/{classEntity?.ID}/qrcodes">
+			<Icon font-size="32px" class="text-dark-gray absolute top-2 right-2"  icon="mdi:qrcode"/>
+		</a>
       </a>
     {/each}
   </div>
