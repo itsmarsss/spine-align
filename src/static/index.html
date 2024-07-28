@@ -67,7 +67,8 @@
       #cropped-poses-container,
       #cropped-poses-raw-container,
       #cropped-depths-container,
-      #gpt-responses-container {
+      #gpt-responses-container,
+      #final-output-container {
         margin-top: 20px;
         background-color: #fff;
         padding: 20px;
@@ -123,6 +124,9 @@
     <div id="gpt-responses-container">
       <div class="result-title">GPT Responses</div>
     </div>
+    <div id="final-output-container">
+      <div class="result-title">Final Output</div>
+    </div>
     <script>
       const video = document.getElementById("webcam");
       let ws;
@@ -157,6 +161,7 @@
             const croppedPosesRaw = data.cropped_poses_raw;
             const croppedDepths = data.cropped_depths;
             const gptResponses = data.gpt_responses;
+            const finalOutput = data.final_output;
 
             // Original Image
             const originalImg = new Image();
@@ -262,6 +267,16 @@
                 index + 1
               }: ${response}</p>`;
             });
+
+            // Final Image
+            const finalImg = new Image();
+            finalImg.src = `data:image/png;base64,${finalOutput}`;
+            const finalContainer = document.getElementById(
+              "final-output-container"
+            );
+            finalContainer.innerHTML =
+              "<div class='result-title'>Final Output</div>";
+            finalContainer.appendChild(finalImg);
           };
         } catch (error) {
           alert("Error accessing webcam: " + error.message);

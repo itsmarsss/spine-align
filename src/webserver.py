@@ -95,6 +95,10 @@ async def websocket_handler(request):
             cropped_poses = []
             cropped_poses_raw = []
             gpt_responses = []
+            center_xs = []
+            center_ys = []
+            cropped_widths = []
+            cropped_heights = []
             for box in face_results[0].boxes:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 
@@ -144,20 +148,37 @@ async def websocket_handler(request):
                 gpt_responses.append(gpt_response)
 
                 # Get the original dimensions
-                original_height, original_width = cropped_pose_raw.shape[:2]
+                cropped_height, cropped_width = cropped_pose_raw.shape[:2]
 
                 # Calculate center coordinates
-                center_x = (new_x1 + offset_x) + original_width / 2
-                center_y = (new_y1 + offset_y) + original_height / 2
+                center_x = (min(new_x1, new_x2) + offset_x) + cropped_height / 2
+                center_y = (min(new_y1, new_y2) + offset_y) + cropped_width / 2
 
-                # Draw the center point on the original image
-                img = cv2.circle(img, (int(center_x), int(center_y)), 5, (0, 255, 0), -1)
-                _, buffer = cv2.imencode('.png', img)
-                img_base64_output = base64.b64encode(buffer).decode('utf-8')
-                cv2.imshow("Original Image", img)
-                cv2.waitKey(0)  # Wait for a key press to close the windows
+                print(new_x1 + offset_x)
+
+                center_xs.append(center_x)
+                center_ys.append(center_y)
+                cropped_widths.append(cropped_width)
+                cropped_heights.append(cropped_height)
 
                 cv2.destroyAllWindows()
+
+            final_output = img.copy()
+
+            for x, y, width, height in zip(center_xs, center_ys, cropped_widths, cropped_heights):
+                x1 = int(x - width / 2)
+                y1 = int(y - height / 2)
+                x2 = int(x + width / 2)
+                y2 = int(y + height / 2)
+
+                final_output = cv2.circle(final_output, (int(x), int(y)), 5, (0, 255, 0), -1)
+                final_output = cv2.rectangle(final_output, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+
+            # Convert the final image with boxes to base64
+            final_output = cv2.cvtColor(final_output, cv2.COLOR_RGB2BGR)
+            _, buffer = cv2.imencode('.png', final_output)
+            final_base64_output = base64.b64encode(buffer).decode('utf-8')
 
             # Convert the image with boxes to base64
             face_with_boxes = cv2.cvtColor(face_with_boxes, cv2.COLOR_RGB2BGR)
@@ -174,7 +195,8 @@ async def websocket_handler(request):
                 "cropped_poses": cropped_poses,
                 "cropped_poses_raw": cropped_poses_raw,
                 "cropped_depths": cropped_depths,
-                "gpt_responses": gpt_responses
+                "gpt_responses": gpt_responses,
+                "final_output": final_base64_output
             })
 
             # except ValueError as e:
