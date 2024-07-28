@@ -147,11 +147,35 @@
           });
           video.srcObject = stream;
           currentStream = stream;
+        } catch (error) {
+          alert("Error accessing webcam: " + error.message);
+        }
+      };
 
-          ws = new WebSocket("ws://" + window.location.host + "/ws");
+      const sendFrame = () => {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
 
-          ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL("image/jpeg");
+
+        const positions = {
+          0: [0, 0],
+          1: [100, 100],
+        };
+
+        fetch("/process_image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ data_url: dataURL, positions: positions }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
             const originalImage = data.original_image;
             const depthImage = data.depth_image;
             const faceImage = data.face_image;
@@ -277,27 +301,7 @@
             finalContainer.innerHTML =
               "<div class='result-title'>Final Output</div>";
             finalContainer.appendChild(finalImg);
-          };
-        } catch (error) {
-          alert("Error accessing webcam: " + error.message);
-        }
-      };
-
-      const sendFrame = () => {
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-          alert("WebSocket connection is not open.");
-          return;
-        }
-
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataURL = canvas.toDataURL("image/jpeg");
-        ws.send(dataURL);
+          });
       };
     </script>
   </body>
