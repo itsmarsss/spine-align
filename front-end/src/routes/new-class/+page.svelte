@@ -44,7 +44,8 @@
 
 	function onSelectPoint(index: number) {
 		return (e: MouseEvent) => {
-			currentQRIndex = index;
+			if (currentQRIndex === index) currentQRIndex = -1; // cancel current selected point
+			else currentQRIndex = index;
 		} 
 	}
 
@@ -133,8 +134,8 @@
 		<div class="qrContainer grid grid-cols-2 gap-y-4 gap-x-8 mb-2">
 			{#each Array(numQRCodes) as _, i}
 				<div class="flex flex-row gap-2 justify-between items-center">
-					<button class="align-middle">QR ID {i + 1}</button>
-					<button class="rounded-xl bg-accent hover:-translate-y-1 transition-transform text-white px-2 py-1 drop-shadow-xl w-[7rem]" on:click={onSelectPoint(i)}>{(qrPoints[i] === undefined || qrPoints[i] === null) ? "Select Point" : `(${qrPoints[i][0]}, ${qrPoints[i][1]})`}</button>
+					<span class="align-middle">QR ID {i + 1}</span>
+					<button class="rounded-xl bg-accent hover:-translate-y-1 transition-transform px-2 py-1 drop-shadow-xl w-[7rem] transition-colors" class:text-black={i === currentQRIndex} class:text-white={i !== currentQRIndex} class:bg-light-gray={i === currentQRIndex} on:click={onSelectPoint(i)}>{(qrPoints[i] === undefined || qrPoints[i] === null) ? "Select Point" : `(${qrPoints[i][0]}, ${qrPoints[i][1]})`}</button>
 				</div>
 			{/each}
 		</div>
