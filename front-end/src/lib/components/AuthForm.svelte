@@ -160,6 +160,10 @@
     @apply bg-light-accent rounded-md outline-none p-2 w-full placeholder-black;
   }
 
+  .form-control > input:focus {
+    @apply shadow-inner;
+  }
+
   .form-control,
   .name-control {
     width: min(60vw, 30rem);
