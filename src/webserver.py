@@ -72,7 +72,10 @@ async def websocket_handler(request):
                 img = np.array(img)
                 
                 face_results = detect_faces(img)
-                img_with_boxes = draw_boxes(img, face_results)
+                
+                # Create a copy of img for drawing boxes
+                img_with_boxes = img.copy()
+                img_with_boxes = draw_boxes(img_with_boxes, face_results)
                 
                 # Constants for scaling
                 scale_upward_factor = 1/2
