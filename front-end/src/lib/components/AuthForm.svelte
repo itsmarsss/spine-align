@@ -37,7 +37,12 @@
         return;
       }
 
-      error = "Something went wrong";
+      if (code === "auth/invalid-credential") {
+        error = "Wrong password";
+        return;
+      }
+
+      error = "Something went wrong (" + code + ")";
       return;
     }
   }
@@ -141,7 +146,7 @@
     </p>
   {/if}
   <button
-    class="w-full bg-accent rounded-lg py-2 mt-2 text-white hover:translate-y-1 transition-transform"
+    class="w-full bg-accent rounded-lg py-2 mt-2 text-white hover:-translate-y-1 transition-transform"
     type="submit">{formType === "log-in" ? "Log In" : "Sign Up"}</button
   >
 </form>

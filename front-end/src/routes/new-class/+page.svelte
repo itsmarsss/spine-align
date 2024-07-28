@@ -8,7 +8,8 @@
 
 	let canvas: HTMLCanvasElement;
 	let numQRCodes: number = 1;
-	let name: string = "";
+	let className: string = "";
+	let teacherName: string = "";
 
 	let qrPoints: ([number, number] | null)[] = Array(numQRCodes);
 
@@ -51,9 +52,10 @@
 		const collectionRef = collection(firestore, "classes");
 		
 		const docRef = await addDoc(collectionRef, {
-			name: name,
+			className: className,
+			teacherName: teacherName,
 			userID: $authStore?.uid,
-			positions: Object.fromEntries(qrPoints.map((point, i) => [i, point])),
+			positions: Object.fromEntries(qrPoints.map((point, i) => [i.toString(), point])),
 			slouchedPositions: [],
 		} as Class);
 		
@@ -67,32 +69,76 @@
 
 		goto(`classes/${docRef.id}`);
 	}
+
+	let previousN = numQRCodes
+
+	function validator(node: HTMLInputElement, value: number) {
+	return {
+		update(value: number) {
+				numQRCodes = value === null || numQRCodes < +node.min ? previousN : parseInt(value as unknown as string)
+		previousN = numQRCodes;
+		}
+	}
+}
 </script>
 
-<main>
-	<div class="dimensions-controls">
-		<div>
-			<label for="name">Class Name</label>
-			<input type="text" name="name" id="name" bind:value={name}>
+<main class="clamp-width my-8 mx-auto">
+	<div class="controls">
+		<div class="metadata flex flex-row justify-between gap-8">
+			<div class="form-control metadata-control">
+				<label for="class-name">Class Name</label>
+				<input
+				  required
+				  type="text"
+				  name="class-name"
+				  id="class-name"
+				  placeholder="Class Name"
+				  bind:value={className}
+				/>
+			</div>
+
+			<div class="form-control metadata-control">
+				<label for="teacher-name">Teacher Name</label>
+				<input
+				  required
+				  type="text"
+				  name="teacher-name"
+				  id="teacher-name"
+				  placeholder="Teacher Name"
+				  bind:value={teacherName}
+				/>
+			</div>
 		</div>
-		<div>
-			<label for="num-qrs">Number of QR codes:</label>
-			<input type="number" name="num-qrs" id="num-qrs" bind:value={numQRCodes}>
+		
+		<div class="form-control">
+			<label for="qr-num">Number of QR Codes</label>
+			<input
+			required
+			min="1"
+			use:validator={numQRCodes}
+			type="number"
+			name="qr-num"
+			id="qr-num"
+			placeholder="Number of QR Codes"
+			bind:value={numQRCodes}
+			/>
 		</div>
-		<div class="qrContainer">
+		<span class="label">Assign QR Codes</span>
+		<div class="qrContainer grid grid-cols-2 gap-y-4 gap-x-8 mb-2">
 			{#each Array(numQRCodes) as _, i}
-				<div>
-					<span>{i + 1}</span>
-					<button on:click={onSelectPoint(i)}>{(qrPoints[i] === undefined || qrPoints[i] === null) ? "Select Point" : `(${qrPoints[i][0]}, ${qrPoints[i][1]})`}</button>
+				<div class="flex flex-row gap-2 justify-between items-center">
+					<span class="align-middle">QR ID {i + 1}</span>
+					<button class="rounded-xl bg-accent hover:-translate-y-1 transition-transform text-white px-2 py-1 drop-shadow-xl w-[7rem]" on:click={onSelectPoint(i)}>{(qrPoints[i] === undefined || qrPoints[i] === null) ? "Select Point" : `(${qrPoints[i][0]}, ${qrPoints[i][1]})`}</button>
 				</div>
 			{/each}
 		</div>
 
 		<form action="" on:submit|preventDefault={onSubmit}>
-			<button>Submit</button>
+			<button class="rounded-xl bg-accent hover:-translate-y-1 transition-transform text-white px-2 py-1 drop-shadow-xl w-full">Submit</button>
 		</form>
 	</div>
-	<div class="video-player" on:click={onSelect}>
+
+	<div class="video-player {currentQRIndex === -1 ? '' : 'drop-shadow-[0_10px_8px_rgba(71,68,217,0.3)]'}" on:click={onSelect}>
 		<VideoPlayer on:video-play={fitCanvas} hideButton={true}/>
 		<canvas bind:this={canvas}></canvas>
 	</div>
@@ -102,7 +148,8 @@
 	main {
 		display: flex;
 		flex-direction: row;
-		gap: 0.5rem;
+		gap: 6rem;
+		justify-content: center;
 	}
 
 	canvas {
@@ -112,8 +159,12 @@
 		z-index: 5;
 	}
 
-	.dimensions-controls {
-		width: 60%;
+	.clamp-width {
+		width: clamp(16rem, 80%, 84rem);
+	}
+
+	.controls {
+		width: 40%;
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
@@ -134,5 +185,16 @@
 		height: 1.5rem;
 		background-color: blue;
 	}
+
+	label, span.label {
+    @apply font-bold block text-black w-full mb-[2px];
+  }
+  .form-control > input {
+    @apply bg-light-accent rounded-md outline-none p-2 w-full placeholder-black;
+  }
+
+  .form-control > input:focus {
+    @apply shadow-inner;
+  }
 </style>
 

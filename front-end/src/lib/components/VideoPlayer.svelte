@@ -53,7 +53,7 @@
 
 		const classDoc = await getDoc(docRef)
 
-		if (!classDoc.exists || classDoc.get("uid") !== user.uid) {
+		if (!classDoc.exists() || classDoc.get("userID") !== user.uid) {
 			// TODO: maybe do a class not found page
 			goto("/classes");
 		}
