@@ -1,20 +1,39 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { base } from "$app/paths";
+  import authStore from "$lib/stores/authStore";
+  import { firebaseAuth } from "$lib/firebase";
 </script>
 
 <nav class="w-full flex flex-row h-20 justify-between px-8">
   <!-- Logo -->
-  <h1 class="flex items-center text-2xl text-black">
-    <Icon icon="ri:sparkling-fill" class="inline-block mr-1" />
-    spine<span class="text-accent">align</span>
+  <h1 class="text-2xl text-black">
+    <a class="flex items-center w-full h-full" href="{base}/">
+      <Icon icon="ri:sparkling-fill" class="inline-block mr-1" />
+      spine<span class="text-accent">align</span>
+    </a>
   </h1>
-  <div class="flex justify-between gap-4 text-xl items-center">
-    <a class="rounded-xl bg-accent text-white px-3 py-2 drop-shadow-xl" href="{base}/sign-up">
+  <div class="flex justify-between gap-4 text-md items-center">
+    {#if $authStore === null}
+      <a
+        class="rounded-xl bg-accent hover:translate-y-1 transition-transform text-white px-3 py-2 drop-shadow-xl"
+        href="{base}/sign-up"
+      >
         Sign up
-    </a>
-    <a class="rounded-xl text-black" href="{base}/log-in">
+      </a>
+      <a
+        class="rounded-xl text-black hover:translate-y-1 transition-transform"
+        href="{base}/log-in"
+      >
         Log in
-    </a>
+      </a>
+    {:else}
+      <button
+        class="rounded-xl text-black hover:translate-y-1 transition-transform"
+        on:click={() => firebaseAuth.signOut()}
+      >
+        sign out
+      </button>
+    {/if}
   </div>
 </nav>
