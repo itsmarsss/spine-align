@@ -2,12 +2,20 @@
   	import authStore from "$lib/stores/authStore";
   	import { createEventDispatcher, onDestroy, onMount } from "svelte";
   	import Window from "$lib/components/Window.svelte";
-	import { doc, getDoc } from "firebase/firestore";
+	import { doc, getDoc, setDoc } from "firebase/firestore";
 	import { firestore } from "$lib/firebase";
 	import { goto } from "$app/navigation";
 
-	export let classId: string | null;
+	type SlouchCode = {
+		slouching: true;
+		confidence: number;
+	} | {
+		slouching: false;
+	}
 
+	export let classId: string | null = null;
+
+	export let hideButton: boolean = false;
 	let positions: Record<string, [number, number]>;
 
 	let videoElement: HTMLVideoElement;
@@ -47,6 +55,16 @@
 		}
 
 		positions = classDoc.get("positions") as Record<string, [number, number]>;
+
+		intervalID = setInterval(async () => {
+			const dataURL = takePhoto();
+
+			if (!dataURL) {
+				return;
+			}
+
+			await sendPhoto(dataURL);
+		}, 1000);
 	});
 
 	function takePhoto() {
@@ -62,39 +80,33 @@
 	}
 
 	async function sendPhoto(imageBase64: string) {
-		// await fetch("/api/detect-slouch", {
-		// 	method: "POST",
-		// 	body: JSON.stringify({
-		// 		image: imageBase64,
-		// 		positions: positions,
-		// 	})
-		// });
-
-		console.log(JSON.stringify({
+		const response = await fetch("/api/detect-slouch", {
+			method: "POST",
+			body: JSON.stringify({
+				image: imageBase64,
 				positions: positions,
-			}) )
+			})
+		});
+
+		const reponseAsJson = await response.json();
+
+		const slouchCodes = reponseAsJson.slouchCodes as SlouchCode[];
+
+		await Promise.all(slouchCodes.map(async (slouchCode, i) => {
+			const qrCodeDocRef = doc(firestore, "classes", classId!, "qrcodes", i.toString());
+
+			setDoc(qrCodeDocRef, slouchCode);
+		}));
 	}
 
 	let intervalID: NodeJS.Timeout;
-
-	onMount(() => {
-		intervalID = setInterval(async () => {
-			const dataURL = takePhoto();
-
-			if (!dataURL) {
-				return;
-			}
-
-			await sendPhoto(dataURL);
-		}, 1000);
-	})
 
 	onDestroy(() => {
 		clearInterval(intervalID);
 	})
 </script>
 
-<Window>
+<Window hideButton>
 	<!-- svelte-ignore a11y-media-has-caption -->
 	<video bind:this={videoElement} class="w-full aspect-[4/3]"></video>
 </Window>

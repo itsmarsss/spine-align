@@ -1,31 +1,31 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
 	import VideoPlayer from "$lib/components/VideoPlayer.svelte";
 	import { firestore } from "$lib/firebase";
 	import type { Class } from "$lib/models/classes";
-  import authStore from "$lib/stores/authStore";
-	import { addDoc, collection } from "firebase/firestore";
+  	import authStore from "$lib/stores/authStore";
+	import { addDoc, collection, doc, setDoc } from "firebase/firestore";
 
 	let canvas: HTMLCanvasElement;
-	let numEsps: number = 1;
+	let numQRCodes: number = 1;
 	let name: string = "";
 
-	let espIds: string[] = Array(numEsps)
-	let espPoints: ([number, number] | null)[] = Array(numEsps);
+	let qrPoints: ([number, number] | null)[] = Array(numQRCodes);
 
-	let currentEspIndex: number = -1;
+	let currentQRIndex: number = -1;
 
 	function onSelect(e: MouseEvent) {
-		if (currentEspIndex == -1) {
+		if (currentQRIndex == -1) {
 			return;
 		}
 
-		espPoints[currentEspIndex] = [e.offsetX, e.offsetY];
+		qrPoints[currentQRIndex] = [e.offsetX, e.offsetY];
 
 		const context = canvas.getContext("2d");
 		context?.clearRect(0, 0, canvas.width, canvas.height);
 		context!.fillStyle = "red";
 
-		espPoints.forEach(point => {
+		qrPoints.forEach(point => {
 			if (!point) {
 				return;
 			}
@@ -33,12 +33,12 @@
 			context?.fillRect(point[0] - 4, point[1] - 4, 8, 8);
 		})
 
-		currentEspIndex = -1;
+		currentQRIndex = -1;
 	}
 
 	function onSelectPoint(index: number) {
 		return (e: MouseEvent) => {
-			currentEspIndex = index;
+			currentQRIndex = index;
 		} 
 	}
 
@@ -47,15 +47,25 @@
 		canvas.height = e.detail.height;
 	}
 
-	function onSubmit() {
+	async function onSubmit() {
 		const collectionRef = collection(firestore, "classes");
-
-		addDoc(collectionRef, {
+		
+		const docRef = await addDoc(collectionRef, {
 			name: name,
 			userID: $authStore?.uid,
-			positions: Object.fromEntries(espIds.map((id, i) => [id, espPoints[i]])),
+			positions: Object.fromEntries(qrPoints.map((point, i) => [i, point])),
 			slouchedPositions: [],
 		} as Class);
+		
+		for (let i = 0; i < numQRCodes; i++) {
+			const qrCodeDocRef = doc(firestore, "classes", docRef.id, "qrcodes", i.toString());
+
+			setDoc(qrCodeDocRef, {
+				slouching: false,
+			})
+		}
+
+		goto(`classes/${docRef.id}`);
 	}
 </script>
 
@@ -66,24 +76,24 @@
 			<input type="text" name="name" id="name" bind:value={name}>
 		</div>
 		<div>
-			<label for="num-esps">Number of ESPs:</label>
-			<input type="number" name="num-esps" id="num-esps" bind:value={numEsps}>
+			<label for="num-qrs">Number of QR codes:</label>
+			<input type="number" name="num-qrs" id="num-qrs" bind:value={numQRCodes}>
 		</div>
-		<div class="espContainer">
-			{#each Array(numEsps) as _, i}
+		<div class="qrContainer">
+			{#each Array(numQRCodes) as _, i}
 				<div>
-					<input type="text" bind:value={espIds[i]}>
-					<button on:click={onSelectPoint(i)}>{(espPoints[i] === undefined || espPoints[i] === null) ? "Select Point" : `(${espPoints[i][0]}, ${espPoints[i][1]})`}</button>
+					<span>{i + 1}</span>
+					<button on:click={onSelectPoint(i)}>{(qrPoints[i] === undefined || qrPoints[i] === null) ? "Select Point" : `(${qrPoints[i][0]}, ${qrPoints[i][1]})`}</button>
 				</div>
 			{/each}
 		</div>
 
-		<form action="" on:submit={onSubmit}>
+		<form action="" on:submit|preventDefault={onSubmit}>
 			<button>Submit</button>
 		</form>
 	</div>
 	<div class="video-player" on:click={onSelect}>
-		<VideoPlayer on:video-play={fitCanvas}/>
+		<VideoPlayer on:video-play={fitCanvas} hideButton={true}/>
 		<canvas bind:this={canvas}></canvas>
 	</div>
 </main>

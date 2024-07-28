@@ -79,7 +79,7 @@
 
 <form
   class="auth-form items-center w-full"
-  on:submit={formType === "log-in" ? onLogIn : onSignUp}
+  on:submit|preventDefault={formType === "log-in" ? onLogIn : onSignUp}
 >
   {#if formType === "sign-up"}
     <div class="name-control flex justify-between gap-[10%] w-full">
