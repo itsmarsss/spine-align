@@ -5,6 +5,7 @@
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import "./index.css";
+  	import NavBar from "$lib/components/NavBar.svelte";
 
 	const AUTHENTICATED_ROUTES = [
 		"/classes",
@@ -24,5 +25,10 @@
 		return unsubscribe;
 	})
 </script>
+
+<!-- landing page -->
+<header class="bg-background w-screen h-screen">
+    <NavBar/>
+</header>
 
 <slot/>
