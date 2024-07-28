@@ -6,9 +6,9 @@ import cv2
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 from io import BytesIO
-from models.dpt import process_image as process_depth_image
+from models.dpt import process_depth_image
 from models.yolov8_face import detect_faces, draw_boxes
-from models.pose import process_image as process_pose_image
+from models.pose import process_pose_image
 
 logging.basicConfig(level=logging.INFO)
 
@@ -69,20 +69,17 @@ async def websocket_handler(request):
             img_data = base64.b64decode(encoded)
 
             try:
+                # Process the image data for image
+                img = Image.open(BytesIO(img_data)).convert("RGB")
+                img = np.array(img)
+
                 # Process the image for depth estimation
-                depth_output, _ = process_depth_image(img_data)
+                depth_output = process_depth_image(img)
                 _, buffer = cv2.imencode('.png', depth_output)
                 depth_base64_output = base64.b64encode(buffer).decode('utf-8')
                 
-                # Process the image for face detection
-                img = Image.open(BytesIO(img_data)).convert("RGB")
-                img = np.array(img)
-                
-                face_results = detect_faces(img)
-                
-                # Create a copy of img for drawing boxes
-                img_with_boxes = img.copy()
-                img_with_boxes = draw_boxes(img_with_boxes, face_results)
+                # Process the image data for face detection
+                face_with_boxes, face_results = detect_faces(img)
                 
                 # Constants for scaling
                 scale_upward_factor = 1/2
@@ -95,6 +92,7 @@ async def websocket_handler(request):
                 cropped_faces = []
                 cropped_depths = []
                 cropped_poses = []
+                cropped_poses_raw = []
                 for box in face_results[0].boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     
@@ -123,39 +121,38 @@ async def websocket_handler(request):
                     _, buffer = cv2.imencode('.png', cropped_face)
                     cropped_faces.append(base64.b64encode(buffer).decode('utf-8'))
 
-                    # Process cropped face for depth estimation
-                    cropped_face_pil = Image.fromarray(cropped_face)
-                    cropped_face_bytes = BytesIO()
-                    cropped_face_pil.save(cropped_face_bytes, format='PNG')
-                    cropped_face_data = cropped_face_bytes.getvalue()
-                    cropped_depth_output, _ = process_depth_image(cropped_face_data)
+                    # Process cropped face for pose detection
+                    cropped_pose_raw, cropped_pose = process_pose_image(cropped_face)
+                    if cropped_pose_raw is None or cropped_pose is None:
+                        continue
+
+                    # Raw
+                    _, buffer = cv2.imencode('.png', cropped_pose_raw)
+                    cropped_poses_raw.append(base64.b64encode(buffer).decode('utf-8'))
+                    # Drawn
+                    _, buffer = cv2.imencode('.png', cropped_pose)
+                    cropped_poses.append(base64.b64encode(buffer).decode('utf-8'))
+
+                    # Process cropped pose for depth estimation
+                    cropped_depth_output = process_depth_image(cropped_pose_raw)
                     _, buffer = cv2.imencode('.png', cropped_depth_output)
                     cropped_depths.append(base64.b64encode(buffer).decode('utf-8'))
 
-                    # Process cropped face for pose detection
-                    cropped_pose_output, _ = process_pose_image(cropped_face_data)
-                    _, buffer = cv2.imencode('.png', cropped_pose_output)
-                    cropped_poses.append(base64.b64encode(buffer).decode('utf-8'))
-
                 # Convert the image with boxes to base64
-                img_with_boxes = cv2.cvtColor(img_with_boxes, cv2.COLOR_RGB2BGR)
-                _, buffer = cv2.imencode('.png', img_with_boxes)
+                face_with_boxes = cv2.cvtColor(face_with_boxes, cv2.COLOR_RGB2BGR)
+                _, buffer = cv2.imencode('.png', face_with_boxes)
                 face_base64_output = base64.b64encode(buffer).decode('utf-8')
-                
-                # Process the original image for pose detection
-                pose_output, _ = process_pose_image(img_data)
-                _, buffer = cv2.imencode('.png', pose_output)
-                pose_base64_output = base64.b64encode(buffer).decode('utf-8')
                 
                 # Send results back via WebSocket
                 await ws.send_json({
+                    "original_image": encoded,
                     "depth_image": depth_base64_output,
                     "face_image": face_base64_output,
-                    "pose_image": pose_base64_output,
                     "boxes": boxes,
                     "cropped_faces": cropped_faces,
-                    "cropped_depths": cropped_depths,
-                    "cropped_poses": cropped_poses
+                    "cropped_poses": cropped_poses,
+                    "cropped_poses_raw": cropped_poses_raw,
+                    "cropped_depths": cropped_depths
                 })
 
             except ValueError as e:

@@ -25,14 +25,7 @@ print(device)
 midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
 transform = midas_transforms.dpt_transform
 
-def process_image(img_data):
-    try:
-        img = Image.open(BytesIO(img_data)).convert("RGB")
-    except UnidentifiedImageError:
-        raise ValueError("Uploaded file is not a valid image.")
-
-    img = np.array(img)
-
+def process_depth_image(img):
     # Transform input for midas
     imgbatch = transform(img).to(device)
 
@@ -51,4 +44,4 @@ def process_image(img_data):
     # Normalize the output for visualization
     output = cv2.normalize(output, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
 
-    return output, img_data
+    return output

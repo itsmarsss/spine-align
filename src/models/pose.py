@@ -19,15 +19,42 @@ def draw_pose(img, results):
         mp_drawing.draw_landmarks(img, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
     return img
 
-def process_image(img_data):
-    try:
-        img = Image.open(BytesIO(img_data)).convert("RGB")
-    except UnidentifiedImageError:
-        raise ValueError("Uploaded file is not a valid image.")
+def crop_at_pose_boundary(img, img_with_pose, results):
+    if results.pose_landmarks:
+        landmarks = results.pose_landmarks.landmark
+        img_height, img_width, _ = img.shape
+        
+        # Extract x and y coordinates of landmarks
+        x_coords = [int(landmark.x * img_width) for landmark in landmarks]
+        y_coords = [int(landmark.y * img_height) for landmark in landmarks]
 
-    img = np.array(img)
+        # Determine the boundary coordinates
+        x_min, x_max = min(x_coords), max(x_coords)
+        y_min, y_max = min(y_coords), max(y_coords)
 
+        # Calculate the center and size of the original box
+        center_x, center_y = (x_min + x_max) // 2, (y_min + y_max) // 2
+        box_width, box_height = x_max - x_min, y_max - y_min
+
+        # Expand the box by 1.5x multiplier
+        scale_multiplier = 1.25
+        new_width, new_height = int(box_width * scale_multiplier), int(box_height * scale_multiplier)
+        new_x_min = max(0, center_x - new_width // 2)
+        new_x_max = min(img_width, center_x + new_width // 2)
+        new_y_min = max(0, center_y - new_height // 2)
+        new_y_max = min(img_height, center_y + new_height // 2)
+
+        # Crop the image at the expanded boundary
+        cropped_img = img[new_y_min:new_y_max, new_x_min:new_x_max]
+        cropped_img_with_pose = img_with_pose[new_y_min:new_y_max, new_x_min:new_x_max]
+        return cropped_img, cropped_img_with_pose
+
+    return None, None
+
+def process_pose_image(img):
     results = detect_pose(img)
-    img_with_pose = draw_pose(img, results)
+    img_with_pose = img.copy()
+    img_with_pose = draw_pose(img_with_pose, results)
+    cropped_img, cropped_img_with_pose = crop_at_pose_boundary(img, img_with_pose, results)
 
-    return img_with_pose, img_data
+    return cropped_img, cropped_img_with_pose
