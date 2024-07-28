@@ -5,7 +5,7 @@
   import { firebaseAuth } from "$lib/firebase";
 </script>
 
-<nav class="w-full flex flex-row h-20 justify-between px-8">
+<nav class="w-full flex flex-row h-20 justify-between px-8 items-center">
   <!-- Logo -->
   <h1 class="text-2xl text-black">
     <a class="flex items-center w-full h-full" href="{base}/">
@@ -13,7 +13,10 @@
       spine<span class="text-accent">align</span>
     </a>
   </h1>
-  <div class="flex justify-between gap-4 text-md items-center">
+  {#if $authStore !== null}
+    <p class="text-black">Welcome, {$authStore.displayName}!</p>
+  {/if}
+  <div class="flex justify-between gap-4 text-md">
     {#if $authStore === null}
       <a
         class="rounded-xl bg-accent hover:-translate-y-1 transition-transform text-white px-3 py-2 drop-shadow-xl"
