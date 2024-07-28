@@ -52,7 +52,7 @@
 	{#if qrCodes} 
 		{#each qrCodes as { dataURL, svgString }, i}
 			<div class="flex flex-col gap-1">
-				<a href={dataURL} download="qr.svg">{@html svgString}</a>
+				<a href={dataURL} download="qr_{i + 1}.svg">{@html svgString}</a>
 				<p class="text-center">QR Code {i + 1}</p>
 			</div> 
 		{/each}
