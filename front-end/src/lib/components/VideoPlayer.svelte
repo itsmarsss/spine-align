@@ -92,15 +92,17 @@
 	}
 
 	async function sendPhoto(imageBase64: string) {
-		const response = await fetch("/api/detect-slouch", {
+		const response = await fetch("http://localhost:8080/process-image", {
 			method: "POST",
 			body: JSON.stringify({
-				image: imageBase64,
+				data_url: imageBase64,
 				positions: positions,
 			})
 		});
 
 		const reponseAsJson = await response.json();
+
+		console.log(repsonseAsJson)
 
 		const slouchCodes = reponseAsJson.slouchCodes as SlouchCode[];
 
