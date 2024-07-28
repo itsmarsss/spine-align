@@ -52,6 +52,7 @@
 
     try {
       credentials = await signUp(email, password, firstName, lastName);
+      goto("/new-class");
     } catch (e) {
       const code = (e as any).code;
 
