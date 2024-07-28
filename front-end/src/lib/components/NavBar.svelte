@@ -13,6 +13,22 @@
       spine<span class="text-accent">align</span>
     </a>
   </h1>
+  {#if $authStore !== null}
+    <div  class="flex items-center gap-4 justify-center">
+      <a
+        class="rounded-xl text-black hover:translate-y-1 transition-transform"
+        href="{base}/camera"
+      >
+        camera
+      </a>
+      <a
+        class="rounded-xl text-black hover:translate-y-1 transition-transform"
+        href="{base}/classes"
+      >
+        classes
+      </a>
+    </div>
+  {/if}
   <div class="flex justify-between gap-4 text-md items-center">
     {#if $authStore === null}
       <a
@@ -28,6 +44,12 @@
         Log in
       </a>
     {:else}
+      <a
+        class="rounded-xl bg-accent hover:translate-y-1 transition-transform text-white px-3 py-2 drop-shadow-xl"
+        href="{base}/classes"
+      >
+        open app
+      </a>
       <button
         class="rounded-xl text-black hover:translate-y-1 transition-transform"
         on:click={() => firebaseAuth.signOut()}
