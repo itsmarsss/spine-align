@@ -74,12 +74,59 @@ async def websocket_handler(request):
                 face_results = detect_faces(img)
                 img_with_boxes = draw_boxes(img, face_results)
                 
+                # Constants for scaling
+                scale_upward_factor = 1/2
+                scale_downward_factor = 7
+                scale_leftward_factor = 1.5
+                scale_rightward_factor = 1.5
+                
+                # Extract bounding box coordinates and cropped faces
+                boxes = []
+                cropped_faces = []
+                cropped_depths = []
+                for box in face_results[0].boxes:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    
+                    # Ensure x1 < x2 and y1 < y2
+                    if x1 > x2:
+                        x1, x2 = x2, x1
+                    if y1 > y2:
+                        y1, y2 = y2, y1
+
+                    # Calculate the face box dimensions
+                    face_height = y2 - y1
+                    face_width = x2 - x1
+                    
+                    # Extend the bounding box
+                    new_y1 = max(0, y1 - int(face_height * scale_upward_factor))
+                    new_y2 = min(img.shape[0], y2 + int(face_height * scale_downward_factor))
+                    new_x1 = max(0, x1 - int(face_width * scale_leftward_factor))
+                    new_x2 = min(img.shape[1], x2 + int(face_width * scale_rightward_factor))
+
+                    boxes.append({"x1": new_x1, "y1": new_y1, "x2": new_x2, "y2": new_y2})
+                    
+                    cropped_face = img[new_y1:new_y2, new_x1:new_x2]
+                    
+                    # Convert cropped face from RGB to BGR
+                    cropped_face = cv2.cvtColor(cropped_face, cv2.COLOR_RGB2BGR)
+                    _, buffer = cv2.imencode('.png', cropped_face)
+                    cropped_faces.append(base64.b64encode(buffer).decode('utf-8'))
+
+                    # Process cropped face for depth estimation
+                    cropped_face_pil = Image.fromarray(cropped_face)
+                    cropped_face_bytes = BytesIO()
+                    cropped_face_pil.save(cropped_face_bytes, format='PNG')
+                    cropped_face_data = cropped_face_bytes.getvalue()
+                    cropped_depth_base64, _ = process_depth_image(cropped_face_data)
+                    cropped_depths.append(cropped_depth_base64)
+
                 # Convert the image with boxes to base64
+                img_with_boxes = cv2.cvtColor(img_with_boxes, cv2.COLOR_RGB2BGR)
                 _, buffer = cv2.imencode('.png', img_with_boxes)
                 face_base64_output = base64.b64encode(buffer).decode('utf-8')
                 
                 # Send both results back via WebSocket
-                await ws.send_str(f"data:image/png;base64,{depth_base64_output}|data:image/png;base64,{face_base64_output}")
+                await ws.send_json({"depth_image": depth_base64_output, "face_image": face_base64_output, "boxes": boxes, "cropped_faces": cropped_faces, "cropped_depths": cropped_depths})
 
             except ValueError as e:
                 await ws.send_str(str(e))

@@ -18,6 +18,4 @@ def draw_boxes(frame, results):
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
             h, w = y2 - y1, x2 - x1
             cvzone.cornerRect(frame, [x1, y1, w, h], l=1, rt=1)
-    # Convert from BGR to RGB
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    return frame_rgb
+    return frame

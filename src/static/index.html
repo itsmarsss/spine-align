@@ -2,70 +2,213 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Processing</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        margin: 0;
+        background-color: #f4f4f4;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+      button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      video {
+        width: 100%;
+        max-width: 500px;
+        margin-top: 20px;
+        border-radius: 5px;
+        border: 2px solid #ddd;
+      }
+      #results-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        width: 100%;
+        max-width: 1000px;
+        margin-top: 20px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      #results-container div {
+        flex: 1 1 48%;
+        margin: 10px;
+        text-align: center;
+      }
+      .result-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #555;
+      }
+      #coordinates-container,
+      #cropped-faces-container,
+      #cropped-depths-container {
+        margin-top: 20px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 500px;
+      }
+      .cropped-face,
+      .cropped-depth {
+        margin: 10px;
+        border-radius: 5px;
+        border: 2px solid #ddd;
+      }
+    </style>
   </head>
   <body>
-    <h2>Upload an Image</h2>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-      <input type="file" name="image" accept="image/*" />
-      <input type="submit" value="Upload" />
-    </form>
-
     <h2>Stream Webcam</h2>
-    <button onclick="startWebcam()">Start Webcam</button>
+    <button onclick="startWebcam('user')">Start Front Camera</button>
+    <button onclick="startWebcam('environment')">Start Back Camera</button>
+    <button onclick="sendFrame()">Send Frame</button>
     <br /><br />
-    <video id="webcam" autoplay></video>
+    <video id="webcam" autoplay playsinline></video>
     <div id="results-container">
-      <div id="depth-map-container"></div>
-      <div id="face-detection-container"></div>
+      <div id="depth-map-container">
+        <div class="result-title">Depth Map</div>
+      </div>
+      <div id="face-detection-container">
+        <div class="result-title">Face Detection</div>
+      </div>
     </div>
-
+    <div id="coordinates-container">
+      <div class="result-title">Bounding Box Coordinates</div>
+    </div>
+    <div id="cropped-faces-container">
+      <div class="result-title">Cropped Faces</div>
+    </div>
+    <div id="cropped-depths-container">
+      <div class="result-title">Cropped Faces Depth Maps</div>
+    </div>
     <script>
       const video = document.getElementById("webcam");
+      let ws;
+      let currentStream;
 
-      const startWebcam = async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        video.srcObject = stream;
+      const startWebcam = async (facingMode = "user") => {
+        if (location.protocol !== "https:") {
+          alert("Webcam access requires HTTPS");
+        }
 
-        const ws = new WebSocket("ws://" + window.location.host + "/ws");
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+        }
 
-        ws.onopen = () => {
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode },
+          });
+          video.srcObject = stream;
+          currentStream = stream;
 
-          const sendFrame = () => {
-            // Set the canvas size to match the video size
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+          ws = new WebSocket("ws://" + window.location.host + "/ws");
 
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL("image/jpeg");
-            ws.send(dataURL);
-            requestAnimationFrame(sendFrame);
+          ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const depthImage = data.depth_image;
+            const faceImage = data.face_image;
+            const boxes = data.boxes;
+            const croppedFaces = data.cropped_faces;
+            const croppedDepths = data.cropped_depths;
+
+            const depthImg = new Image();
+            depthImg.src = `data:image/png;base64,${depthImage}`;
+            const depthContainer = document.getElementById(
+              "depth-map-container"
+            );
+            depthContainer.innerHTML =
+              "<div class='result-title'>Depth Map</div>";
+            depthContainer.appendChild(depthImg);
+
+            const faceImg = new Image();
+            faceImg.src = `data:image/png;base64,${faceImage}`;
+            const faceContainer = document.getElementById(
+              "face-detection-container"
+            );
+            faceContainer.innerHTML =
+              "<div class='result-title'>Face Detection</div>";
+            faceContainer.appendChild(faceImg);
+
+            const coordinatesContainer = document.getElementById(
+              "coordinates-container"
+            );
+            coordinatesContainer.innerHTML =
+              "<div class='result-title'>Bounding Box Coordinates</div>";
+            boxes.forEach((box, index) => {
+              coordinatesContainer.innerHTML += `<p>Face ${index + 1}: (${
+                box.x1
+              }, ${box.y1}) to (${box.x2}, ${box.y2})</p>`;
+            });
+
+            const croppedFacesContainer = document.getElementById(
+              "cropped-faces-container"
+            );
+            croppedFacesContainer.innerHTML =
+              "<div class='result-title'>Cropped Faces</div>";
+            croppedFaces.forEach((face, index) => {
+              const faceImg = new Image();
+              faceImg.src = `data:image/png;base64,${face}`;
+              faceImg.className = "cropped-face";
+              croppedFacesContainer.appendChild(faceImg);
+            });
+
+            const croppedDepthsContainer = document.getElementById(
+              "cropped-depths-container"
+            );
+            croppedDepthsContainer.innerHTML =
+              "<div class='result-title'>Cropped Faces Depth Maps</div>";
+            croppedDepths.forEach((depth, index) => {
+              const depthImg = new Image();
+              depthImg.src = `data:image/png;base64,${depth}`;
+              depthImg.className = "cropped-depth";
+              croppedDepthsContainer.appendChild(depthImg);
+            });
           };
+        } catch (error) {
+          alert("Error accessing webcam: " + error.message);
+        }
+      };
 
-          requestAnimationFrame(sendFrame);
-        };
+      const sendFrame = () => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          alert("WebSocket connection is not open.");
+          return;
+        }
 
-        ws.onmessage = (event) => {
-          const [depthImage, faceImage] = event.data.split("|");
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
 
-          const depthImg = new Image();
-          depthImg.src = depthImage;
-          const depthContainer = document.getElementById("depth-map-container");
-          depthContainer.innerHTML = "";
-          depthContainer.appendChild(depthImg);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
 
-          const faceImg = new Image();
-          faceImg.src = faceImage;
-          const faceContainer = document.getElementById(
-            "face-detection-container"
-          );
-          faceContainer.innerHTML = "";
-          faceContainer.appendChild(faceImg);
-        };
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL("image/jpeg");
+        ws.send(dataURL);
       };
     </script>
   </body>
