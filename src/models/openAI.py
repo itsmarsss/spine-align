@@ -12,8 +12,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 system_prompt = """Analyse this photo and determine whether the person has good or bad posture in JSON format, an approximate depth map has as well as the photo have been provided, be a bit lenient:
              {
-                "posture": "good" or "bad",
-                "confidence": 0 to 100 (always 2 significant figures)
+                "posture": "good" or "bad"
              }"""
 
 def resize_image(img, target_size=512):
@@ -39,7 +38,7 @@ def query_gpt(img_raw, img_depth):
     # Convert the images to base64 encoding
     img_raw = resize_image(img_raw)
     img_depth = resize_image(img_depth)
-    
+
     _, buffer = cv2.imencode('.png', img_raw)
     encoded_image_raw = base64.b64encode(buffer).decode('utf-8')
 
