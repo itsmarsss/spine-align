@@ -30,10 +30,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-
-  
-  WidgetsFlutterBinding.ensureInitialized();
-
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -41,7 +37,7 @@ void main() async {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
-  final InitializationSettings initializationSettings = InitializationSettings(
+  final InitializationSettings initializationSettings = const InitializationSettings(
     android: initializationSettingsAndroid,
   );
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
@@ -67,7 +63,7 @@ void main() async {
   print('User granted permission: ${settings.authorizationStatus}');
   runApp(const MyApp());
 
-  Timer.periodic(Duration(seconds: 1), (Timer t) => fetch('your_uri_here'));
+  Timer.periodic(const Duration(seconds: 1), (Timer t) => fetch('your_uri_here'));
   //insert uri here
 
 
