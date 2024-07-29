@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -15,7 +16,32 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
-  static FirebaseOptions get currentPlatform {
+  late final FirebaseOptions android;
+  late final FirebaseOptions ios;
+
+  Future<void> initialize() async {
+    await dotenv.load();
+
+    android = FirebaseOptions(
+      apiKey: dotenv.env["ANDROID_API_KEY"]!,
+      appId: dotenv.env["ANDROID_APP_ID"]!,
+      messagingSenderId: dotenv.env["ANDROID_MESSAGING_SENDER_ID"]!,
+      projectId: dotenv.env["ANDROID_PROJECT_ID"]!,
+      storageBucket: dotenv.env["ANDROID_STORAGE_BUCKET"]!,
+    );
+
+    ios = FirebaseOptions(
+      apiKey: dotenv.env["IOS_API_KEY"]!,
+      appId: dotenv.env["IOS_APP_ID"]!,
+      messagingSenderId: dotenv.env["IOS_MESSAGING_SENDER_ID"]!,
+      projectId: dotenv.env["IOS_PROJECT_ID"]!,
+      storageBucket: dotenv.env["IOS_STORAGE_BUCKET"]!,
+      iosClientId: dotenv.env["IOS_CLIENT_ID"]!,
+      iosBundleId: dotenv.env["IOS_BUNDLE_ID"]!,
+    );
+  }
+
+  FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       throw UnsupportedError(
         'DefaultFirebaseOptions have not been configured for web - '
@@ -48,23 +74,4 @@ class DefaultFirebaseOptions {
         );
     }
   }
-
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAaTNlH0t6xt-C82yAWuII4dCIJ9KEExxI',
-    appId: '1:252772509888:android:f88dd436676a00f931a525',
-    messagingSenderId: '252772509888',
-    projectId: 'spline-align',
-    storageBucket: 'spline-align.appspot.com',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDc_8oratAAlXfUXxnP12Tx8IhUSLd8eRk',
-    appId: '1:252772509888:ios:302ae908e07defdb31a525',
-    messagingSenderId: '252772509888',
-    projectId: 'spline-align',
-    storageBucket: 'spline-align.appspot.com',
-    iosClientId: '252772509888-fk7nqo7avi26dl83iivbptb9ai2q3skb.apps.googleusercontent.com',
-    iosBundleId: 'com.example.mobile',
-  );
-
 }
