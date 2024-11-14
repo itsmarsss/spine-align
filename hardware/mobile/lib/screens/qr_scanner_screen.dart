@@ -17,6 +17,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     if (await storage.containsKey(key: "qrId") && await storage.containsKey(key: "classId")) {
       _codeScanned = true;
     }
+
+    // HARD CODING QR CODE SCAN
+    await storage.write(key: "qrId", value: "0");
+    await storage.write(key: "classId", value: "Utq8xmbAenygSivRZ7TO");
+    _codeScanned = true;
   }
 
   @override
